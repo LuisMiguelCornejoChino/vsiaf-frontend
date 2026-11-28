@@ -1,0 +1,101 @@
+<div class="backdrop" (click)="cerrar()">
+  <div
+    class="win"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="bk-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="win-title" id="bk-title">COPIAS DE SEGURIDAD VSIAF</div>
+
+    <div class="win-body">
+      <div class="banner">ADMINISTRACION DE BACKUPS</div>
+
+      <div class="panels">
+        <section class="col col-lista">
+          <h3>RESPALDOS REALIZADOS:</h3>
+          <div class="lista" role="listbox" aria-label="Respaldos realizados" (click)="deseleccionar()">
+            @if (cargando() && items().length === 0) {
+              <p class="vacio">[CARGANDO... el servidor puede tardar hasta un minuto en despertar]</p>
+            } @else if (items().length === 0) {
+              <p class="vacio">[VACIO...]</p>
+            } @else {
+              @for (r of items(); track r.codrespaldo) {
+                <button
+                  type="button"
+                  class="item"
+                  role="option"
+                  [class.sel]="seleccionId() === r.codrespaldo"
+                  [attr.aria-selected]="seleccionId() === r.codrespaldo"
+                  (click)="$event.stopPropagation(); seleccionar(r)"
+                >
+                  {{ nombreSinZip(r) }}
+                </button>
+              }
+            }
+          </div>
+        </section>
+
+        <section class="col col-detalle">
+          <h3>DESCRIPCION DE LOS ARCHIVOS DE RESPALDO</h3>
+          <div class="marco">
+            <div class="ficha">
+              <div class="celda celda-archivo">
+                <strong>ARCHIVO</strong>
+                <span class="dato">{{ seleccionado() ? nombreSinZip(seleccionado()!) : '' }}<em>.zip</em></span>
+              </div>
+              <div class="celda celda-dia">
+                <strong>DIA</strong>
+                <span class="dato">{{ seleccionado() ? dia(seleccionado()!.fecrespaldo) : '/ /' }}</span>
+              </div>
+              <div class="celda celda-hora">
+                <strong>HORA</strong>
+                <span class="dato">{{ seleccionado() ? hora(seleccionado()!.fecrespaldo) : '' }}</span>
+              </div>
+              <div class="celda celda-usuario">
+                <strong>USUARIO</strong>
+                <span class="dato">{{ seleccionado()?.usuario ?? '' }}</span>
+              </div>
+            </div>
+
+            <label class="desc">
+              <strong>DESCRIPCION</strong>
+              @if (seleccionado(); as s) {
+                <textarea
+                  readonly
+                  [value]="(s.descripcion ?? '') + (s.descripcion ? '\n' : '') + 'Tamaño: ' + tamano(s.tamrespaldo)"
+                ></textarea>
+              } @else {
+                <textarea
+                  placeholder="Escribe una descripción para el nuevo respaldo (opcional)"
+                  [ngModel]="descripcionNueva()"
+                  (ngModelChange)="descripcionNueva.set($event)"
+                ></textarea>
+              }
+            </label>
+          </div>
+        </section>
+      </div>
+
+      @if (modoLocal()) {
+        <div class="msg local" role="status">MODO LOCAL: no hay conexi&oacute;n con el servidor. Los respaldos se guardan en este navegador.</div>
+      }
+
+      @if (mensaje(); as m) {
+        <div class="msg" [class.error]="m.tipo === 'error'" role="status">{{ m.texto }}</div>
+      }
+
+      <div class="botones">
+        <button type="button" class="btn" [disabled]="ocupado()" (click)="respaldar()">
+          {{ trabajando() ? 'Procesando...' : 'Respaldar' }}
+        </button>
+        <button type="button" class="btn" [disabled]="ocupado() || !seleccionado()" (click)="restaurar()">Restaurar</button>
+        <button type="button" class="btn" [disabled]="ocupado() || !seleccionado()" (click)="copiarA()">Copiar a ...</button>
+        <button type="button" class="btn" [disabled]="ocupado()" (click)="archivo.click()">Copiar de ...</button>
+        <button type="button" class="btn" [disabled]="ocupado() || !seleccionado()" (click)="borrar()">Borrar</button>
+        <button type="button" class="btn" (click)="cerrar()">Salir</button>
+        <input #archivo type="file" accept=".zip,application/zip" hidden (change)="copiarDe($event)" />
+      </div>
+    </div>
+  </div>
+</div>
